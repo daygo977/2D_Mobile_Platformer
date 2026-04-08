@@ -39,11 +39,13 @@ public class Controller2D : MonoBehaviour
     public bool IsDashing => isDashing;
     public float ChargePercent => Mathf.Clamp01(chargeTimer / maxChargeTime);
 
+    //Auto grab rigidbody2d when the script is added first
     private void Reset()
     {
         rb = GetComponent<Rigidbody2D>();
     }
 
+    //Make sure rigidbody2d reference exist before the game starts
     private void Awake()
     {
         if (rb == null)
@@ -54,18 +56,20 @@ public class Controller2D : MonoBehaviour
 
     private void Update()
     {
+        //Use keyboard in editor or PC, else use mobile UI input
 #if UNITY_EDITOR || UNITY_STANDALONE
         float keyboardInput = Input.GetAxisRaw("Horizontal");
         moveInput = Mathf.Abs(keyboardInput) > 0.01f ? keyboardInput : uiMoveInput;
 #else
         moveInput = uiMoveInput;
 #endif
-
+        //Check every frame whether player is standing on the ground 
         UpdateGroundedState();
     }
 
     private void FixedUpdate()
     {
+        //Do not change movement while dashing
         if (isDashing)
         {
             return;
@@ -83,11 +87,13 @@ public class Controller2D : MonoBehaviour
         rb.linearVelocity = velocity;
     }
 
+    //Called by left/right UI buttons
     public void SetMoveInput(float value)
     {
         uiMoveInput = Mathf.Clamp(value, -1f, 1f);
     }
 
+    //Small normal jump from a tap
     public void TapJump()
     {
         if (!CanJump())
@@ -98,6 +104,7 @@ public class Controller2D : MonoBehaviour
         PerformJump(tapJumpVelocity);
     }
 
+    //Start charging a stronger jump
     public bool BeginCharge()
     {
         if (!CanJump())
@@ -110,6 +117,7 @@ public class Controller2D : MonoBehaviour
         return true;
     }
 
+    //Increase charge over time while the player holds input
     public void TickCharge(float deltaTime)
     {
         if (!isCharging)
@@ -126,6 +134,7 @@ public class Controller2D : MonoBehaviour
         chargeTimer = Mathf.Min(chargeTimer + deltaTime, maxChargeTime);
     }
 
+    //Release charge and jump based on how long it was held
     public void ReleaseCharge()
     {
         if (!isCharging)
@@ -141,12 +150,14 @@ public class Controller2D : MonoBehaviour
         PerformJump(jumpVelocity);
     }
 
+    //Stop charge without jumping
     public void CancelCharge()
     {
         isCharging = false;
         chargeTimer = 0f;
     }
 
+    //Air dash only: one dash per airtime, resets on landing
     public bool TryDash(Vector2 direction)
     {
         if (direction.sqrMagnitude < 0.01f || !canDash || isDashing || isGrounded)
@@ -158,6 +169,7 @@ public class Controller2D : MonoBehaviour
         return true;
     }
 
+    //Handles jump velocity
     private void PerformJump(float jumpVelocity)
     {
         CancelCharge();
@@ -165,15 +177,18 @@ public class Controller2D : MonoBehaviour
         velocity.y = jumpVelocity;
         rb.linearVelocity = velocity;
 
+        //Force player into an airborne state after jumping
         isGrounded = false;
         lastGroundTime = -99f;
     }
 
+    //Allows jump slightly after leaving the ground (coyote time)
     private bool CanJump()
     {
         return !isDashing && Time.time <= lastGroundTime + coyoteTime;
     }
 
+    //Quickly disable gravity and pushes pplayer in dash direction
     private IEnumerator DashRoutine(Vector2 direction)
     {
         canDash = false;
@@ -190,6 +205,7 @@ public class Controller2D : MonoBehaviour
         isDashing = false;
     }
 
+    //Check if playter is touching ground
     private void UpdateGroundedState()
     {
         wasGrounded = isGrounded;
@@ -198,6 +214,7 @@ public class Controller2D : MonoBehaviour
         {
             lastGroundTime = Time.time;
 
+            //Reset dash when player lands
             if (!wasGrounded)
             {
                 canDash = true;
@@ -205,6 +222,7 @@ public class Controller2D : MonoBehaviour
         }
     }
 
+    //Shows ground check area
     private void OnDrawGizmosSelected()
     {
         if (groundCheck == null)

@@ -21,6 +21,7 @@ public class GestureInputArea : MonoBehaviour, IPointerDownHandler, IDragHandler
 
     private void Update()
     {
+        //Only process input while the finger is being tracked
         if (!isTracking || swipeTriggered)
         {
             return;
@@ -29,16 +30,20 @@ public class GestureInputArea : MonoBehaviour, IPointerDownHandler, IDragHandler
         float duration = Time.unscaledTime - startTime;
         float distance = Vector2.Distance(currentPos, startPos);
 
+        //Start charge jump only after holding long enough
+        //and only if input has not become a swipe
         if (!chargeStarted && duration >= holdThreshold && distance < swipeThresholdPixels)
         {
             chargeStarted = player.BeginCharge();
         }
 
+        //Keep increasing the jump charge while holding
         if (chargeStarted)
         {
             player.TickCharge(Time.unscaledDeltaTime);
         }
 
+        //If drag distance is large enough, try dash
         if (distance >= swipeThresholdPixels)
         {
             if (chargeStarted)
@@ -56,6 +61,7 @@ public class GestureInputArea : MonoBehaviour, IPointerDownHandler, IDragHandler
         }
     }
 
+    //Start tracking when player first touches input area
     public void OnPointerDown(PointerEventData eventData)
     {
         isTracking = true;
@@ -66,11 +72,13 @@ public class GestureInputArea : MonoBehaviour, IPointerDownHandler, IDragHandler
         startTime = Time.unscaledTime;
     }
 
+    //Update current finger position while dragging
     public void OnDrag(PointerEventData eventData)
     {
         currentPos = eventData.position;
     }
 
+    //Decide whether input was a tap or charged jump when released
     public void OnPointerUp(PointerEventData eventData)
     {
         if (!isTracking)
@@ -98,6 +106,7 @@ public class GestureInputArea : MonoBehaviour, IPointerDownHandler, IDragHandler
         ResetState();
     }
 
+    //Clear current gesture states after input ends.
     private void ResetState()
     {
         isTracking = false;
