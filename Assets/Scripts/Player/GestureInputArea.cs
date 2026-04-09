@@ -64,6 +64,7 @@ public class GestureInputArea : MonoBehaviour, IPointerDownHandler, IDragHandler
     //Start tracking when player first touches input area
     public void OnPointerDown(PointerEventData eventData)
     {
+        Debug.Log("Touch started");
         isTracking = true;
         swipeTriggered = false;
         chargeStarted = false;
@@ -81,6 +82,7 @@ public class GestureInputArea : MonoBehaviour, IPointerDownHandler, IDragHandler
     //Decide whether input was a tap or charged jump when released
     public void OnPointerUp(PointerEventData eventData)
     {
+        Debug.Log("Touch ended");
         if (!isTracking)
         {
             return;

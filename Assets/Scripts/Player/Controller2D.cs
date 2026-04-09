@@ -100,7 +100,7 @@ public class Controller2D : MonoBehaviour
         {
             return;
         }
-
+        Debug.Log("Tap jump");
         PerformJump(tapJumpVelocity);
     }
 
@@ -114,6 +114,7 @@ public class Controller2D : MonoBehaviour
 
         isCharging = true;
         chargeTimer = 0f;
+        Debug.Log("Charge started");
         return true;
     }
 
@@ -145,6 +146,8 @@ public class Controller2D : MonoBehaviour
         float t = Mathf.Clamp01(chargeTimer / maxChargeTime);
         float jumpVelocity = Mathf.Lerp(tapJumpVelocity, maxChargeJumpVelocity, t);
 
+        Debug.Log("Charge released. Power: " + t);
+
         isCharging = false;
         chargeTimer = 0f;
         PerformJump(jumpVelocity);
@@ -162,9 +165,11 @@ public class Controller2D : MonoBehaviour
     {
         if (direction.sqrMagnitude < 0.01f || !canDash || isDashing || isGrounded)
         {
+            Debug.Log("Dash failed");
             return false;
         }
 
+        Debug.Log("Dash succeeded: " + direction.normalized);
         StartCoroutine(DashRoutine(direction.normalized));
         return true;
     }
@@ -218,6 +223,7 @@ public class Controller2D : MonoBehaviour
             if (!wasGrounded)
             {
                 canDash = true;
+                Debug.Log("Player landed. Dash reset.");
             }
         }
     }
