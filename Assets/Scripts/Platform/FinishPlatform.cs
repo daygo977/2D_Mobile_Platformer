@@ -20,31 +20,34 @@ public class FinishPlatform : MonoBehaviour
             levelCompleted = true;
             Debug.Log("Level Complete!");
 
-            // Stop player movement
+            //Stop player movement
             Rigidbody2D rb = other.GetComponent<Rigidbody2D>();
             if (rb != null)
             {
                 rb.linearVelocity = Vector2.zero;
             }
 
-            // Disable player control
+            //Disable player control
             Controller2D controller = other.GetComponent<Controller2D>();
             if (controller != null)
             {
                 controller.enabled = false;
             }
 
-            // Disable gameplay UI
+            //Disable gameplay UI
             if (gameplayUI != null)
             {
                 gameplayUI.SetActive(false);
             }
 
-            // Show level complete screen
+            //Show level complete screen
             if (levelCompletePanel != null)
             {
                 levelCompletePanel.SetActive(true);
             }
+
+            //Freeze level
+            Time.timeScale = 0f;
         }
     }
 }
