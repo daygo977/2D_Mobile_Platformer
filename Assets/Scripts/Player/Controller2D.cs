@@ -24,6 +24,15 @@ public class Controller2D : MonoBehaviour
     [Header("Ground Check")]
     [SerializeField] private float groundCheckRadius = 0.2f;
 
+    [Header("Visual Feedback")]
+    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private Color normalColor = Color.white;
+    [SerializeField] private Color tapJumpColor = Color.yellow;
+    [SerializeField] private Color maxChargeColor  = Color.magenta;
+    [SerializeField] private float tapFlashDuration = 1.2f;
+
+    private Coroutine tapFlashCoroutine;
+
     private float uiMoveInput;
     private float moveInput;
     private bool isGrounded;
@@ -43,6 +52,7 @@ public class Controller2D : MonoBehaviour
     private void Reset()
     {
         rb = GetComponent<Rigidbody2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     //Make sure rigidbody2d reference exist before the game starts
@@ -52,6 +62,12 @@ public class Controller2D : MonoBehaviour
         {
             rb = GetComponent<Rigidbody2D>();
         }
+
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        }
+        SetPlayerColor(normalColor);
     }
 
     private void Update()
@@ -101,6 +117,9 @@ public class Controller2D : MonoBehaviour
             return;
         }
         Debug.Log("Tap jump");
+
+        //Flash coplor to show normal tap jump
+        StartTapFlash();
         PerformJump(tapJumpVelocity);
     }
 
@@ -115,6 +134,9 @@ public class Controller2D : MonoBehaviour
         isCharging = true;
         chargeTimer = 0f;
         Debug.Log("Charge started");
+
+        //Start charge color at beginning of blend
+        UpdateChargeColor();
         return true;
     }
 
@@ -132,7 +154,11 @@ public class Controller2D : MonoBehaviour
             return;
         }
 
+        //Increase charge over time until max
         chargeTimer = Mathf.Min(chargeTimer + deltaTime, maxChargeTime);
+
+        //Update player color as charge grows
+        UpdateChargeColor();
     }
 
     //Release charge and jump based on how long it was held
@@ -150,14 +176,25 @@ public class Controller2D : MonoBehaviour
 
         isCharging = false;
         chargeTimer = 0f;
+
+        //Return to normal after releasing charge
+        SetPlayerColor(normalColor);
         PerformJump(jumpVelocity);
     }
 
     //Stop charge without jumping
     public void CancelCharge()
     {
+        // If there is no active charge, do nothing.
+        if (!isCharging)
+        {
+            return;
+        }
         isCharging = false;
         chargeTimer = 0f;
+
+        //Reset color if charge is cancelled
+        SetPlayerColor(normalColor);
     }
 
     //Air dash only: one dash per airtime, resets on landing
@@ -226,6 +263,55 @@ public class Controller2D : MonoBehaviour
                 Debug.Log("Player landed. Dash reset.");
             }
         }
+    }
+
+    private void SetPlayerColor(Color color)
+    {
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = color;
+        }
+    }
+
+    private void UpdateChargeColor()
+    {
+        if (spriteRenderer == null)
+        {
+            return;
+        }
+
+        //Blend from normal color to max charge color
+        float t = Mathf.Clamp01(chargeTimer / maxChargeTime);
+        spriteRenderer.color = Color.Lerp(normalColor, maxChargeColor, t);
+    }
+
+    private void StartTapFlash()
+    {
+        if (tapFlashCoroutine != null)
+        {
+            StopCoroutine(tapFlashCoroutine);
+        }
+
+        tapFlashCoroutine = StartCoroutine(TapFlashRoutine());
+    }
+
+    private IEnumerator TapFlashRoutine()
+    {
+        //Quick flash to show a tap jump happened
+        SetPlayerColor(tapJumpColor);
+        yield return new WaitForSecondsRealtime(tapFlashDuration);
+
+        //Return to correct/regular color after flash
+        if (isCharging)
+        {
+            SetPlayerColor(maxChargeColor);
+        }
+        else
+        {
+            SetPlayerColor(normalColor);
+        }
+
+        tapFlashCoroutine = null;
     }
 
     //Shows ground check area
